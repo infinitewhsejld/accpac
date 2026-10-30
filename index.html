@@ -262,6 +262,14 @@
       height: 100vh; height: 100dvh; max-height: 100dvh !important;
       border-radius: 0 !important;
     }
+    /* Item Finder table: SKU stays on one line, only the description wraps */
+    #finderModal th, #finderModal td { padding-left: 12px !important; padding-right: 12px !important; }
+    #finderModal thead th { white-space: nowrap; width: auto !important; }
+    #finderTableBody td:first-child { white-space: nowrap; }
+    #finderTableBody td:last-child {
+      white-space: normal !important; overflow: visible !important;
+      text-overflow: clip !important; max-width: none !important;
+    }
     .toast-container { left: 12px; right: 12px; bottom: 12px; }
     .toast { max-width: none; }
   }
@@ -451,6 +459,17 @@
         </tbody>
        </table>
       </div><!-- Mobile Card Ledger View -->
+      <div id="mobileSortBar" class="sm:hidden no-print flex items-center gap-2 px-4 py-2.5 border-b border-slate-100 bg-white">
+       <label for="mobileSortSelect" class="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Sort by</label>
+       <select id="mobileSortSelect" onchange="handleMobileSortChange()" class="flex-1 min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 focus:outline-none" style="min-height:44px;font-size:16px">
+        <option value="date">Date</option>
+        <option value="doc">Doc No.</option>
+        <option value="type">Type</option>
+        <option value="loc">Location</option>
+        <option value="qty">Qty</option>
+       </select>
+       <button id="mobileSortDir" onclick="toggleMobileSortDir()" type="button" aria-label="Toggle sort direction" class="shrink-0 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-100 transition cursor-pointer" style="min-height:44px;min-width:44px">▼</button>
+      </div>
       <div id="ledgerCardList" class="sm:hidden divide-y divide-slate-50">
        <div class="p-8 text-center text-slate-400 text-xs font-medium italic">
         Select an item above to retrieve recent ledger history.
@@ -935,7 +954,29 @@ function applyLedgerSort() {
   renderLedgerTableOnly();
 }
 
+// Mobile sort controls (the table headers are hidden on phones)
+function handleMobileSortChange() {
+  const col = document.getElementById('mobileSortSelect').value;
+  currentSortColumn = col;
+  currentSortDirection = (col === 'date' || col === 'qty') ? 'desc' : 'asc'; // newest / biggest first
+  currentLedgerPage = 1;
+  applyLedgerSort();
+}
+
+function toggleMobileSortDir() {
+  currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+  currentLedgerPage = 1;
+  applyLedgerSort();
+}
+
 function updateSortIcons() {
+  const mSel = document.getElementById('mobileSortSelect');
+  const mDir = document.getElementById('mobileSortDir');
+  if (mSel) mSel.value = currentSortColumn;
+  if (mDir) {
+    mDir.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+    mDir.title = currentSortDirection === 'asc' ? 'Ascending (A→Z, low→high, old→new)' : 'Descending (Z→A, high→low, new→old)';
+  }
   ['date', 'doc', 'type', 'loc', 'qty'].forEach(col => {
     const el = document.getElementById(`sort-${col}`);
     if (!el) return;
